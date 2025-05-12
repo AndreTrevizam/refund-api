@@ -38,7 +38,7 @@ class SessionsController {
 
     const { password: _, ...userWithoutPassword } = user
 
-    return res.json({ token, user: userWithoutPassword })
+    res.json({ token, user: userWithoutPassword })
   }
 }
 
