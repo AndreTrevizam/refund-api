@@ -8,6 +8,19 @@ const refundsController = new RefundsController()
 refundsRoutes.post(
   "/",
   verifyUserAuthorization(['employee']),
-  refundsController.create)
+  refundsController.create
+)
+
+refundsRoutes.get(
+  "/",
+  verifyUserAuthorization(['manager']),
+  refundsController.index
+)
+
+refundsRoutes.get(
+  "/:id",
+  verifyUserAuthorization(['employee', 'manager']),
+  refundsController.show
+)
 
 export { refundsRoutes }
