@@ -1,9 +1,13 @@
 import { Request, Response } from "express"
-import { z } from "zod"
+import { z, ZodError } from "zod"
+import { DiskStorage } from "@/providers/disk-storage"
 import uploadConfig from "@/configs/upload"
+import { AppError } from "@/utils/AppError"
 
 class UploadsController {
   async create(req: Request, res: Response) {
+    const diskStorage = new DiskStorage()
+
     try {
       const fileSchema = z.object({
         filename: z.string().min(1, "Arquivo é obrigatório"),
@@ -18,10 +22,20 @@ class UploadsController {
             .refine((size) => size <= uploadConfig.MAX_FILE_SIZE, `O tamanho máximo do arquivo é ${uploadConfig.MAX_SIZE}`)
       }).passthrough()
 
-      const { file } = fileSchema.parse(req.file)
+      const file = fileSchema.parse(req.file)
+      const filename = await diskStorage.saveFile(file.filename)
 
-      res.json({ message: "ok" })
+      res.json({ filename })
+
     } catch (error) {
+      if (error instanceof ZodError) {
+        if (req.file) {
+          await diskStorage.deleteFile(req.file.filename, "tmp")
+        }
+
+        throw new AppError(error.issues[0].message)
+      }
+
       throw error
     }
 
